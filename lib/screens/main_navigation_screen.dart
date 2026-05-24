@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../services/auth_service.dart';
+import '../services/ai_service.dart';
 import 'dart:ui';
 import 'dart:io';
 import 'package:path/path.dart' show join;
@@ -60,171 +61,234 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 1; // Default to Habits tab (Active in mock)
   bool _biometricActive = false;
 
-  void _showProfileSettingsSheet(BuildContext context) {
+  void _showProfileSettingsSheet(BuildContext context) async {
+    final theme = Theme.of(context);
+    final apiKey = await AIService.instance.getApiKey() ?? '';
+    final keyController = TextEditingController(text: apiKey);
+
+    if (!context.mounted) return;
+
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
       ),
       builder: (context) {
-        final theme = Theme.of(context);
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Container(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 20.0),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2.0),
+              padding: EdgeInsets.only(
+                left: 24.0,
+                right: 24.0,
+                top: 24.0,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 20.0),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.outlineVariant,
+                          borderRadius: BorderRadius.circular(2.0),
+                        ),
                       ),
                     ),
-                  ),
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 28,
-                        backgroundColor: theme.colorScheme.primaryContainer,
-                        child: Icon(LucideIcons.user, size: 32, color: theme.colorScheme.onPrimaryContainer),
-                      ),
-                      const SizedBox(width: 16.0),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            AuthService.instance.currentUserValue?.name ?? 'Adrian Akbar',
-                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: theme.colorScheme.primaryContainer,
+                          child: Icon(LucideIcons.user, size: 32, color: theme.colorScheme.onPrimaryContainer),
+                        ),
+                        const SizedBox(width: 16.0),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                AuthService.instance.currentUserValue?.name ?? 'Adrian Akbar',
+                                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                              Text(
+                                'Level ${widget.level} Habit Champion 🛡️',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.secondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ],
                           ),
-                          Text(
-                            'Level ${widget.level} Habit Champion 🛡️',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.secondary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24.0),
-                  Text(
-                    'SECURITY & OFFLINE CONFIG',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      letterSpacing: 1.0,
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 12.0),
-                  // Biometric Switch Row
-                  SwitchListTile(
-                    title: const Text('Kunci Biometrik (Fingerprint)'),
-                    subtitle: Text(
-                      _biometricActive ? 'Active 🔒 (offline-first)' : 'Inactive 🔓',
-                      style: TextStyle(
-                        color: _biometricActive ? theme.colorScheme.primary : theme.colorScheme.outline,
-                        fontWeight: FontWeight.bold,
+                    const SizedBox(height: 24.0),
+                    Text(
+                      'INTEGRASI GOOGLE AI STUDIO',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        letterSpacing: 1.0,
                       ),
                     ),
-                    value: _biometricActive,
-                    activeTrackColor: theme.colorScheme.primary,
-                    onChanged: (bool value) {
-                      setModalState(() {
-                        setState(() {
-                          _biometricActive = value;
+                    const SizedBox(height: 12.0),
+                    TextFormField(
+                      controller: keyController,
+                      obscureText: true,
+                      style: theme.textTheme.bodyMedium,
+                      decoration: InputDecoration(
+                        labelText: 'Gemini API Key',
+                        hintText: 'Masukkan Google AI Studio API Key',
+                        prefixIcon: const Icon(LucideIcons.key, size: 18),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12.0),
+                        suffixIcon: IconButton(
+                          icon: const Icon(LucideIcons.save, size: 18),
+                          onPressed: () async {
+                            final newKey = keyController.text.trim();
+                            await AIService.instance.saveApiKey(newKey);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(newKey.isEmpty
+                                      ? 'API Key dihapus! Menggunakan motivasi default offline.'
+                                      : 'API Key Gemini berhasil disimpan! 🔑 (+15 XP)'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                              if (newKey.isNotEmpty) {
+                                widget.onAwardXP(15);
+                              }
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 24),
+                    Text(
+                      'SECURITY & OFFLINE CONFIG',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 12.0),
+                    // Biometric Switch Row
+                    SwitchListTile(
+                      title: const Text('Kunci Biometrik (Fingerprint)'),
+                      subtitle: Text(
+                        _biometricActive ? 'Active 🔒 (offline-first)' : 'Inactive 🔓',
+                        style: TextStyle(
+                          color: _biometricActive ? theme.colorScheme.primary : theme.colorScheme.outline,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      value: _biometricActive,
+                      activeTrackColor: theme.colorScheme.primary,
+                      onChanged: (bool value) {
+                        setModalState(() {
+                          setState(() {
+                            _biometricActive = value;
+                          });
                         });
-                      });
-                      if (value) {
-                        widget.onAwardXP(15);
-                      }
-                    },
-                  ),
-                  const Divider(),
-                  // Local Backup Row
-                  ListTile(
-                    title: const Text('Export Backup Lokal (.json)'),
-                    subtitle: const Text('Cadangkan data offline enkripsi lokal'),
-                    trailing: const Icon(LucideIcons.download, color: Color(0xFF4648D4)),
-                    onTap: () async {
-                      Navigator.pop(context);
-                      final backupPath = await DatabaseService.instance.exportBackupAsJson();
-                      widget.onAwardXP(25);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Backup berhasil! Disimpan di: $backupPath 💾 (+25 XP)'),
-                            behavior: SnackBarBehavior.floating,
-                            duration: const Duration(seconds: 4),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                  const Divider(),
-                  // Local Restore Row
-                  ListTile(
-                    title: const Text('Import Backup Lokal (.json)'),
-                    subtitle: const Text('Pulihkan data offline enkripsi lokal'),
-                    trailing: const Icon(LucideIcons.upload, color: Color(0xFF006C49)),
-                    onTap: () async {
-                      Navigator.pop(context);
-                      final documentsDirectory = await getApplicationDocumentsDirectory();
-                      final backupPath = join(documentsDirectory.path, 'retivy_backup.json');
-                      final file = File(backupPath);
-                      if (!await file.exists()) {
+                        if (value) {
+                          widget.onAwardXP(15);
+                        }
+                      },
+                    ),
+                    const Divider(),
+                    // Local Backup Row
+                    ListTile(
+                      title: const Text('Export Backup Lokal (.json)'),
+                      subtitle: const Text('Cadangkan data offline enkripsi lokal'),
+                      trailing: const Icon(LucideIcons.download, color: Color(0xFF4648D4)),
+                      onTap: () async {
+                        Navigator.pop(context);
+                        final backupPath = await DatabaseService.instance.exportBackupAsJson();
+                        widget.onAwardXP(25);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Gagal: Berkas retivy_backup.json tidak ditemukan! Silakan lakukan export terlebih dahulu. ⚠️'),
+                            SnackBar(
+                              content: Text('Backup berhasil! Disimpan di: $backupPath 💾 (+25 XP)'),
                               behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 4),
                             ),
                           );
                         }
-                        return;
-                      }
+                      },
+                    ),
+                    const Divider(),
+                    // Local Restore Row
+                    ListTile(
+                      title: const Text('Import Backup Lokal (.json)'),
+                      subtitle: const Text('Pulihkan data offline enkripsi lokal'),
+                      trailing: const Icon(LucideIcons.upload, color: Color(0xFF006C49)),
+                      onTap: () async {
+                        Navigator.pop(context);
+                        final documentsDirectory = await getApplicationDocumentsDirectory();
+                        final backupPath = join(documentsDirectory.path, 'retivy_backup.json');
+                        final file = File(backupPath);
+                        if (!await file.exists()) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Gagal: Berkas retivy_backup.json tidak ditemukan! Silakan lakukan export terlebih dahulu. ⚠️'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                          return;
+                        }
 
-                      final success = await DatabaseService.instance.importBackupFromJsonFile(backupPath);
-                      if (success) {
+                        final success = await DatabaseService.instance.importBackupFromJsonFile(backupPath);
+                        if (success) {
+                          widget.onReloadDatabase();
+                          widget.onAwardXP(30);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Berhasil memulihkan cadangan Retivy! 🚀 (+30 XP)'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Gagal membaca berkas cadangan! Format berkas rusak atau tidak valid. ⚠️'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      title: const Text('Keluar (Log Out)', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                      subtitle: const Text('Keluar dari sesi saat ini'),
+                      trailing: const Icon(LucideIcons.logOut, color: Colors.red),
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await AuthService.instance.logout();
                         widget.onReloadDatabase();
-                        widget.onAwardXP(30);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Berhasil memulihkan cadangan Retivy! 🚀 (+30 XP)'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      } else {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Gagal membaca berkas cadangan! Format berkas rusak atau tidak valid. ⚠️'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                  const Divider(),
-                  ListTile(
-                    title: const Text('Keluar (Log Out)', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                    subtitle: const Text('Keluar dari sesi saat ini'),
-                    trailing: const Icon(LucideIcons.logOut, color: Colors.red),
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await AuthService.instance.logout();
-                      widget.onReloadDatabase();
-                    },
-                  ),
-                ],
+                      },
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -692,7 +756,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           _buildNavItem(0, LucideIcons.home, 'Home'),
                           _buildNavItem(1, LucideIcons.repeat, 'Habits'),
                           _buildNavItem(2, LucideIcons.calendar, 'Tasks'),
-                          _buildNavItem(3, LucideIcons.mapPin, 'Smart'),
+                          _buildNavItem(3, LucideIcons.flame, 'Smart'),
                         ],
                       ),
                     ),

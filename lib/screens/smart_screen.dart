@@ -1,23 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../models/habit.dart';
+import '../services/ai_service.dart';
+import '../services/auth_service.dart';
 
-class SmartScreen extends StatelessWidget {
+class SmartScreen extends StatefulWidget {
   final List<Habit> habits;
 
   const SmartScreen({super.key, required this.habits});
+
+  @override
+  State<SmartScreen> createState() => _SmartScreenState();
+}
+
+class _SmartScreenState extends State<SmartScreen> {
+  String _motivationQuote = "Memuat motivasi harian Anda dari AI...";
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDailyQuote();
+  }
+
+  Future<void> _loadDailyQuote() async {
+    final userName = AuthService.instance.currentUserValue?.name ?? "Adrian";
+    final quote = await AIService.instance.getTodayMotivation(userName);
+    if (mounted) {
+      setState(() {
+        _motivationQuote = quote;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     // Calculate facts for smart suggestions
-    final waterHabitList = habits.where((h) => h.iconName == 'water_drop').toList();
+    final waterHabitList = widget.habits.where((h) => h.iconName == 'water_drop').toList();
     final waterLeft = waterHabitList.isNotEmpty 
         ? (waterHabitList.first.targetValue - waterHabitList.first.currentValue).clamp(0.0, 9999.0)
         : 0.0;
     
-    final timerHabitList = habits.where((h) => h.type == HabitType.timer).toList();
+    final timerHabitList = widget.habits.where((h) => h.type == HabitType.timer).toList();
     final hasActiveTimer = timerHabitList.isNotEmpty && timerHabitList.first.remainingSeconds > 0 && !timerHabitList.first.isCompleted;
 
     return SingleChildScrollView(
@@ -25,23 +52,50 @@ class SmartScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Screen Header
-          Text(
-            'Smart Assistant',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'AI insights customized for you',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+          // Screen Header (Dynamic row with premium bot icon)
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10.0),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  LucideIcons.bot,
+                  color: theme.colorScheme.primary,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 14.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Smart Assistant',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    Text(
+                      'AI insights customized for you',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24.0),
 
-          // Daily Motivation Card (Glassmorphic look/Gradient)
+          // Daily Motivation Card (Google AI Studio powered)
           Container(
             padding: const EdgeInsets.all(20.0),
             decoration: BoxDecoration(
@@ -61,13 +115,13 @@ class SmartScreen extends StatelessWidget {
                 Row(
                   children: [
                     const Icon(
-                      LucideIcons.sparkles,
+                      LucideIcons.bot,
                       color: Colors.white,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'AI INSIGHT OF THE DAY',
+                      'AI MOTIVASI HARI INI',
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: Colors.white.withValues(alpha: 0.9),
                         fontWeight: FontWeight.bold,
@@ -77,15 +131,30 @@ class SmartScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  '"Consistency is not about perfection; it is about progress. Tiny habits build extraordinary results."',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: Colors.white,
-                    fontStyle: FontStyle.italic,
-                    fontWeight: FontWeight.bold,
-                    height: 1.4,
-                  ),
-                ),
+                _isLoading
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12.0),
+                          child: SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Text(
+                        '“$_motivationQuote”',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: Colors.white,
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.bold,
+                          height: 1.4,
+                          fontSize: 16,
+                        ),
+                      ),
               ],
             ),
           ),
@@ -114,8 +183,6 @@ class SmartScreen extends StatelessWidget {
                 if (waterHabitList.isNotEmpty) {
                   final h = waterHabitList.first;
                   final nextVal = (h.currentValue + 250.0).clamp(0.0, h.targetValue);
-                  // We can't update directly here since habits is immutable list,
-                  // but in a real app this is a shortcut trigger. We'll show a nice dialog or toast.
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Hydration updated! Target progress: ${nextVal.toStringAsFixed(0)} ml'),
