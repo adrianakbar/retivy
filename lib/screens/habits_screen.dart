@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../models/habit.dart';
 import '../widgets/habit_card_numeric.dart';
 import '../widgets/habit_card_timer.dart';
@@ -70,7 +71,7 @@ class HabitsScreen extends StatelessWidget {
                 IconButton(
                   tooltip: 'Reset all daily habits',
                   icon: Icon(
-                    Icons.restart_alt_rounded,
+                    LucideIcons.refreshCw,
                     color: theme.colorScheme.primary,
                   ),
                   onPressed: () {
@@ -112,7 +113,7 @@ class HabitsScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       Icon(
-                        Icons.insights_rounded,
+                        LucideIcons.lineChart,
                         size: 64,
                         color: theme.colorScheme.outlineVariant,
                       ),
@@ -202,7 +203,7 @@ class HabitsScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.0),
           ),
-          icon: const Icon(Icons.add),
+          icon: const Icon(LucideIcons.plus),
           label: const Text(
             'Add Habit',
             style: TextStyle(fontWeight: FontWeight.bold),

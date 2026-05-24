@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../models/habit.dart';
 
 class HabitCardChecklist extends StatefulWidget {
@@ -170,7 +171,7 @@ class _HabitCardChecklistState extends State<HabitCardChecklist> {
                               duration: const Duration(milliseconds: 200),
                               curve: Curves.elasticOut,
                               child: const Icon(
-                                Icons.check,
+                               LucideIcons.check,
                                 color: Colors.white,
                                 size: 24,
                                 weight: 3.0,

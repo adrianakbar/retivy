@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../models/habit.dart';
 
 class SmartScreen extends StatelessWidget {
@@ -60,7 +61,7 @@ class SmartScreen extends StatelessWidget {
                 Row(
                   children: [
                     const Icon(
-                      Icons.auto_awesome_rounded,
+                      LucideIcons.sparkles,
                       color: Colors.white,
                       size: 20,
                     ),
@@ -104,7 +105,7 @@ class SmartScreen extends StatelessWidget {
           if (waterLeft > 0)
             _buildSmartTipCard(
               context,
-              icon: Icons.water_drop_rounded,
+              icon: LucideIcons.droplets,
               color: theme.colorScheme.primary,
               title: 'Stay Hydrated',
               body: 'You still need to drink ${waterLeft.toStringAsFixed(0)} ml of water today to meet your daily intake. Grab a glass now!',
@@ -127,7 +128,7 @@ class SmartScreen extends StatelessWidget {
           else
             _buildSmartTipCard(
               context,
-              icon: Icons.check_circle_rounded,
+              icon: LucideIcons.badgeCheck,
               color: theme.colorScheme.secondary,
               title: 'Water Goal Completed! 🎉',
               body: 'Excellent! You\'ve successfully hit your 3000 ml water target. Keep maintaining this fluid balance daily!',
@@ -138,7 +139,7 @@ class SmartScreen extends StatelessWidget {
           if (hasActiveTimer)
             _buildSmartTipCard(
               context,
-              icon: Icons.menu_book_rounded,
+              icon: LucideIcons.bookOpen,
               color: theme.colorScheme.tertiary,
               title: 'Focus Session Pending',
               body: 'You have a reading session configured. Carve out just 15 minutes of quiet time to start your timer.',
@@ -148,7 +149,7 @@ class SmartScreen extends StatelessWidget {
           // Health habits
           _buildSmartTipCard(
             context,
-            icon: Icons.bedtime_rounded,
+            icon: LucideIcons.moon,
             color: Colors.indigo,
             title: 'Sleep Hygiene Reminder',
             body: 'Caffeine blocks adenosine receptors. Avoid drinking coffee or tea within 6 hours of bedtime for deeper sleep quality.',
@@ -157,7 +158,7 @@ class SmartScreen extends StatelessWidget {
 
           _buildSmartTipCard(
             context,
-            icon: Icons.lightbulb_rounded,
+            icon: LucideIcons.lightbulb,
             color: Colors.amber,
             title: 'Rule of Two Minutes',
             body: 'If a habit takes less than 2 minutes to do (like taking vitamins), perform it immediately. Avoid scheduling simple steps.',

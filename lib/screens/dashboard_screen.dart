@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../services/auth_service.dart';
 import '../models/habit.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -34,7 +36,7 @@ class DashboardScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Welcome back, Adrian',
+                    'Welcome back, ${AuthService.instance.currentUserValue?.name ?? 'Adrian'}',
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -61,7 +63,7 @@ class DashboardScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     Icon(
-                      Icons.local_fire_department_rounded,
+                      LucideIcons.flame,
                       color: theme.colorScheme.tertiary,
                       size: 20,
                     ),
@@ -202,7 +204,7 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: 12.0),
           _buildAnalyticRow(
             context,
-            icon: Icons.water_drop_rounded,
+            icon: LucideIcons.droplets,
             color: theme.colorScheme.primary,
             title: 'Water Intake',
             value: 'Total consumed: ${_getWaterTotal()} ml',
@@ -211,7 +213,7 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: 12.0),
           _buildAnalyticRow(
             context,
-            icon: Icons.hourglass_top_rounded,
+            icon: LucideIcons.hourglass,
             color: theme.colorScheme.tertiary,
             title: 'Focus Duration',
             value: 'Timer session: ${_getTimerTotal()}',
@@ -220,7 +222,7 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: 12.0),
           _buildAnalyticRow(
             context,
-            icon: Icons.health_and_safety_rounded,
+            icon: LucideIcons.shieldCheck,
             color: theme.colorScheme.secondary,
             title: 'Supplement Routine',
             value: _getVitaminStatus(),
@@ -255,9 +257,9 @@ class DashboardScreen extends StatelessWidget {
     );
 
     if (isCompleted) {
-      circleChild = const Icon(Icons.check, size: 14, color: Colors.white);
+      circleChild = const Icon(LucideIcons.check, size: 14, color: Colors.white);
     } else if (isSkipped) {
-      circleChild = Icon(Icons.redo_rounded, size: 14, color: theme.colorScheme.outline);
+      circleChild = Icon(LucideIcons.redo, size: 14, color: theme.colorScheme.outline);
     } else if (isToday && rate > 0) {
       circleChild = Stack(
         alignment: Alignment.center,

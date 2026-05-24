@@ -29,6 +29,14 @@ class DatabaseService {
       path,
       version: 1,
       onCreate: _onCreate,
+      onOpen: (db) async {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS session(
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+          )
+        ''');
+      },
     );
   }
 
@@ -182,6 +190,36 @@ class DatabaseService {
     );
     if (maps.isEmpty) return null;
     return maps.first['value'] as int;
+  }
+
+  // --- SESSION CRUD ---
+
+  Future<void> saveSessionValue(String key, String value) async {
+    final db = await database;
+    await db.insert(
+      'session',
+      {
+        'key': key,
+        'value': value,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<String?> fetchSessionValue(String key) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'session',
+      where: 'key = ?',
+      whereArgs: [key],
+    );
+    if (maps.isEmpty) return null;
+    return maps.first['value'] as String;
+  }
+
+  Future<void> clearSession() async {
+    final db = await database;
+    await db.delete('session');
   }
 
   // --- DATABASE UTILITIES ---

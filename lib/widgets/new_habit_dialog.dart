@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../models/habit.dart';
 
 class NewHabitDialog extends StatefulWidget {
@@ -39,17 +40,17 @@ class _NewHabitDialogState extends State<NewHabitDialog> {
   IconData _getIconData(String name) {
     switch (name) {
       case 'water_drop':
-        return Icons.water_drop_rounded;
+        return LucideIcons.droplet;
       case 'menu_book':
-        return Icons.menu_book_rounded;
+        return LucideIcons.book;
       case 'pill':
-        return Icons.medication_rounded;
+        return LucideIcons.pill;
       case 'directions_run':
-        return Icons.directions_run_rounded;
+        return LucideIcons.footprints;
       case 'bed':
-        return Icons.bed_rounded;
+        return LucideIcons.bed;
       default:
-        return Icons.star_rounded;
+        return LucideIcons.star;
     }
   }
 
@@ -146,7 +147,7 @@ class _NewHabitDialogState extends State<NewHabitDialog> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded),
+                    icon: const Icon(LucideIcons.x),
                   ),
                 ],
               ),
@@ -204,17 +205,17 @@ class _NewHabitDialogState extends State<NewHabitDialog> {
                 segments: const [
                   ButtonSegment(
                     value: HabitType.checklist,
-                    icon: Icon(Icons.check_circle_outline),
+                    icon: Icon(LucideIcons.checkSquare),
                     label: Text('Checklist'),
                   ),
                   ButtonSegment(
                     value: HabitType.numeric,
-                    icon: Icon(Icons.water_drop_outlined),
+                    icon: Icon(LucideIcons.droplet),
                     label: Text('Numeric'),
                   ),
                   ButtonSegment(
                     value: HabitType.timer,
-                    icon: Icon(Icons.timer_outlined),
+                    icon: Icon(LucideIcons.timer),
                     label: Text('Timer'),
                   ),
                 ],

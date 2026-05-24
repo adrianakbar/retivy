@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 enum HabitType { numeric, timer, checklist }
 
@@ -127,22 +128,22 @@ class Habit {
   IconData get iconData {
     switch (iconName) {
       case 'water_drop':
-        return Icons.water_drop_rounded;
+        return LucideIcons.droplets;
       case 'menu_book':
-        return Icons.menu_book_rounded;
+        return LucideIcons.bookOpen;
       case 'pill':
       case 'medication':
-        return Icons.medication_rounded;
+        return LucideIcons.pill;
       case 'directions_run':
-        return Icons.directions_run_rounded;
+        return LucideIcons.footprints;
       case 'fitness_center':
-        return Icons.fitness_center_rounded;
+        return LucideIcons.dumbbell;
       case 'edit':
-        return Icons.edit_rounded;
+        return LucideIcons.edit;
       case 'bed':
-        return Icons.bed_rounded;
+        return LucideIcons.bed;
       default:
-        return Icons.star_rounded;
+        return LucideIcons.star;
     }
   }
 }

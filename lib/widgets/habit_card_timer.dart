@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../models/habit.dart';
 
 class HabitCardTimer extends StatefulWidget {
@@ -361,7 +362,7 @@ class _HabitCardTimerState extends State<HabitCardTimer> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                      Icons.restart_alt,
+                                      LucideIcons.refreshCw,
                                       size: 18,
                                       color: theme.colorScheme.onSurface,
                                     ),
@@ -408,7 +409,7 @@ class _HabitCardTimerState extends State<HabitCardTimer> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                      widget.habit.isRunning ? Icons.pause : Icons.play_arrow,
+                                      widget.habit.isRunning ? LucideIcons.pause : LucideIcons.play,
                                       size: 18,
                                       color: Colors.white,
                                     ),

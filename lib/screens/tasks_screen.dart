@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../models/task_item.dart';
 
 class TasksScreen extends StatefulWidget {
@@ -164,7 +165,7 @@ class _TasksScreenState extends State<TasksScreen> {
                           final task = widget.tasks[idx];
                           return ListTile(
                             leading: Icon(
-                              task.isCompleted ? Icons.check_circle : Icons.circle_outlined,
+                              task.isCompleted ? LucideIcons.checkSquare : LucideIcons.square,
                               color: theme.colorScheme.primary,
                             ),
                             title: Text(
@@ -185,7 +186,7 @@ class _TasksScreenState extends State<TasksScreen> {
               if (widget.timeblocks[hour] != null) ...[
                 const Divider(),
                 ListTile(
-                  leading: const Icon(Icons.remove_circle_outline_rounded, color: Colors.red),
+                  leading: const Icon(LucideIcons.xCircle, color: Colors.red),
                   title: const Text('Remove scheduled task', style: TextStyle(color: Colors.red)),
                   onTap: () {
                     widget.onUpdateTimeblock(hour, null);
@@ -260,12 +261,12 @@ class _TasksScreenState extends State<TasksScreen> {
                 segments: const [
                   ButtonSegment(
                     value: 0,
-                    icon: Icon(Icons.list_alt_rounded),
+                    icon: Icon(LucideIcons.listTodo),
                     label: Text('Task List'),
                   ),
                   ButtonSegment(
                     value: 1,
-                    icon: Icon(Icons.calendar_today_rounded),
+                    icon: Icon(LucideIcons.calendar),
                     label: Text('Time Blocking'),
                   ),
                 ],
@@ -318,7 +319,7 @@ class _TasksScreenState extends State<TasksScreen> {
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             child: const Icon(
-                              Icons.add,
+                              LucideIcons.plus,
                               color: Colors.white,
                             ),
                           ),
@@ -331,7 +332,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       const SizedBox(height: 8.0),
                       Row(
                         children: [
-                          Icon(Icons.auto_awesome, size: 14, color: theme.colorScheme.primary),
+                          Icon(LucideIcons.sparkles, size: 14, color: theme.colorScheme.primary),
                           const SizedBox(width: 4.0),
                           Text(
                             'Parsed Tags: ',
@@ -397,7 +398,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                       ),
                                     ),
                                     trailing: IconButton(
-                                      icon: const Icon(Icons.delete_outline_rounded),
+                                      icon: const Icon(LucideIcons.trash2),
                                       color: theme.colorScheme.error.withValues(alpha: 0.8),
                                       onPressed: () => _deleteTask(index),
                                     ),
@@ -508,7 +509,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                             ],
                                           ),
                                         ),
-                                        Icon(Icons.edit_calendar_rounded, color: theme.colorScheme.primary, size: 20),
+                                        Icon(LucideIcons.calendar, color: theme.colorScheme.primary, size: 20),
                                       ],
                                     )
                                   : Row(
@@ -523,7 +524,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                             ),
                                           ),
                                         ),
-                                        Icon(Icons.add_circle_outline_rounded, color: theme.colorScheme.outline, size: 20),
+                                        Icon(LucideIcons.plusCircle, color: theme.colorScheme.outline, size: 20),
                                       ],
                                     ),
                             ),

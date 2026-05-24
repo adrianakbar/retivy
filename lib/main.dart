@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'models/habit.dart';
 import 'models/task_item.dart';
 import 'services/database_service.dart';
+import 'services/auth_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/main_navigation_screen.dart';
+import 'screens/login_screen.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -21,6 +24,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   bool _isDarkMode = false;
   bool _isLoading = true;
+  UserSession? _currentUser;
 
   int _xp = 0;
   int _level = 1;
@@ -38,10 +42,19 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _loadDatabase();
+    AuthService.instance.authStateChanges.listen((session) {
+      if (mounted) {
+        setState(() {
+          _currentUser = session;
+        });
+      }
+    });
   }
 
   Future<void> _loadDatabase() async {
     final dbService = DatabaseService.instance;
+    await AuthService.instance.init();
+    final currentSession = AuthService.instance.currentUserValue;
 
     // Fetch habits, tasks, userstats, and timeblocks from SQLite
     List<Habit> loadedHabits = await dbService.fetchHabits();
@@ -98,6 +111,7 @@ class _MyAppState extends State<MyApp> {
       _timeblocks = mappedTimeblocks;
       _level = loadedLevel ?? 1;
       _xp = loadedXP ?? 0;
+      _currentUser = currentSession;
       _isLoading = false;
     });
   }
@@ -135,8 +149,8 @@ class _MyAppState extends State<MyApp> {
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.stars_rounded,
+                  Icon(
+                    LucideIcons.sparkles,
                     color: Colors.white,
                     size: 36,
                   ),
@@ -156,7 +170,7 @@ class _MyAppState extends State<MyApp> {
                           ),
                         ),
                         Text(
-                          'Congratulations Adrian! You reached Level $_level!',
+                          'Congratulations ${_currentUser?.name ?? 'Adrian'}! You reached Level $_level!',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -290,24 +304,26 @@ class _MyAppState extends State<MyApp> {
                 ),
               ),
             )
-          : MainNavigationScreen(
-              habits: _habits,
-              tasks: _tasks,
-              timeblocks: _timeblocks,
-              xp: _xp,
-              level: _level,
-              onAwardXP: _awardXP,
-              onUpdateHabit: _updateHabit,
-              onAddHabit: _addHabit,
-              onResetAll: _resetAllHabits,
-              onToggleTheme: _toggleTheme,
-              isDarkMode: _isDarkMode,
-              onAddTask: _addTask,
-              onUpdateTask: _updateTask,
-              onDeleteTask: _deleteTask,
-              onUpdateTimeblock: _updateTimeblock,
-              onReloadDatabase: _loadDatabase,
-            ),
+          : _currentUser == null
+              ? LoginScreen(onLoginSuccess: _loadDatabase)
+              : MainNavigationScreen(
+                  habits: _habits,
+                  tasks: _tasks,
+                  timeblocks: _timeblocks,
+                  xp: _xp,
+                  level: _level,
+                  onAwardXP: _awardXP,
+                  onUpdateHabit: _updateHabit,
+                  onAddHabit: _addHabit,
+                  onResetAll: _resetAllHabits,
+                  onToggleTheme: _toggleTheme,
+                  isDarkMode: _isDarkMode,
+                  onAddTask: _addTask,
+                  onUpdateTask: _updateTask,
+                  onDeleteTask: _deleteTask,
+                  onUpdateTimeblock: _updateTimeblock,
+                  onReloadDatabase: _loadDatabase,
+                ),
     );
   }
 }

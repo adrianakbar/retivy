@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../models/habit.dart';
 
 class HabitCardNumeric extends StatefulWidget {
@@ -331,7 +332,7 @@ class _HabitCardNumericState extends State<HabitCardNumeric> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Icon(
-                                  Icons.add,
+                                  LucideIcons.plus,
                                   color: Colors.white,
                                   size: 18,
                                 ),

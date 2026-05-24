@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../services/auth_service.dart';
 import 'dart:ui';
 import 'dart:io';
 import 'package:path/path.dart' show join;
@@ -90,14 +92,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       CircleAvatar(
                         radius: 28,
                         backgroundColor: theme.colorScheme.primaryContainer,
-                        child: Icon(Icons.person, size: 32, color: theme.colorScheme.onPrimaryContainer),
+                        child: Icon(LucideIcons.user, size: 32, color: theme.colorScheme.onPrimaryContainer),
                       ),
                       const SizedBox(width: 16.0),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Adrian Akbar',
+                            AuthService.instance.currentUserValue?.name ?? 'Adrian Akbar',
                             style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           Text(
@@ -148,7 +150,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   ListTile(
                     title: const Text('Export Backup Lokal (.json)'),
                     subtitle: const Text('Cadangkan data offline enkripsi lokal'),
-                    trailing: Icon(Icons.download_rounded, color: theme.colorScheme.primary),
+                    trailing: const Icon(LucideIcons.download, color: Color(0xFF4648D4)),
                     onTap: () async {
                       Navigator.pop(context);
                       final backupPath = await DatabaseService.instance.exportBackupAsJson();
@@ -169,7 +171,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   ListTile(
                     title: const Text('Import Backup Lokal (.json)'),
                     subtitle: const Text('Pulihkan data offline enkripsi lokal'),
-                    trailing: Icon(Icons.upload_rounded, color: theme.colorScheme.secondary),
+                    trailing: const Icon(LucideIcons.upload, color: Color(0xFF006C49)),
                     onTap: () async {
                       Navigator.pop(context);
                       final documentsDirectory = await getApplicationDocumentsDirectory();
@@ -209,6 +211,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           );
                         }
                       }
+                    },
+                  ),
+                  const Divider(),
+                  ListTile(
+                    title: const Text('Keluar (Log Out)', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Keluar dari sesi saat ini'),
+                    trailing: const Icon(LucideIcons.logOut, color: Colors.red),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await AuthService.instance.logout();
+                      widget.onReloadDatabase();
                     },
                   ),
                 ],
@@ -262,7 +275,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
                   Row(
                     children: [
-                      Icon(Icons.military_tech_rounded, size: 32, color: theme.colorScheme.tertiary),
+                      Icon(LucideIcons.award, size: 32, color: theme.colorScheme.tertiary),
                       const SizedBox(width: 8.0),
                       Text(
                         'Milestone Badges',
@@ -358,7 +371,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              isUnlocked ? Icons.verified_rounded : Icons.lock_rounded,
+              isUnlocked ? LucideIcons.badgeCheck : LucideIcons.lock,
               color: isUnlocked ? themeColor : theme.colorScheme.outline,
               size: 24,
             ),
@@ -491,7 +504,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           IconButton(
                             tooltip: 'Toggle Theme',
                             icon: Icon(
-                              widget.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                              widget.isDarkMode ? LucideIcons.sun : LucideIcons.moon,
                               color: theme.colorScheme.primary,
                               size: 22,
                             ),
@@ -501,7 +514,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           IconButton(
                             tooltip: 'Milestone Tech Achievements',
                             icon: Icon(
-                              Icons.military_tech_rounded,
+                              LucideIcons.award,
                               color: theme.colorScheme.primary,
                               size: 24,
                             ),
@@ -522,10 +535,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                                   width: 1.5,
                                 ),
                               ),
-                              child: Icon(
-                                Icons.person,
-                                color: theme.colorScheme.onSurfaceVariant,
-                                size: 18,
+                              child: Center(
+                                child: AuthService.instance.currentUserValue?.avatarUrl != null && AuthService.instance.currentUserValue!.avatarUrl.isNotEmpty
+                                    ? Text(
+                                        AuthService.instance.currentUserValue!.avatarUrl,
+                                        style: TextStyle(
+                                          color: theme.colorScheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      )
+                                    : Icon(
+                                        LucideIcons.user,
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                        size: 18,
+                                      ),
                               ),
                             ),
                           ),
@@ -665,10 +689,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildNavItem(0, Icons.home_rounded, 'Home'),
-                          _buildNavItem(1, Icons.cached_rounded, 'Habits'),
-                          _buildNavItem(2, Icons.event_note_rounded, 'Tasks'),
-                          _buildNavItem(3, Icons.location_on_rounded, 'Smart'),
+                          _buildNavItem(0, LucideIcons.home, 'Home'),
+                          _buildNavItem(1, LucideIcons.repeat, 'Habits'),
+                          _buildNavItem(2, LucideIcons.calendar, 'Tasks'),
+                          _buildNavItem(3, LucideIcons.mapPin, 'Smart'),
                         ],
                       ),
                     ),
