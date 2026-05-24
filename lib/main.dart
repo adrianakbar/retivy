@@ -7,6 +7,9 @@ import 'services/auth_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/login_screen.dart';
+import 'services/biometric_service.dart';
+import 'screens/biometric_lock_screen.dart';
+import 'services/notification_service.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -25,6 +28,7 @@ class _MyAppState extends State<MyApp> {
   bool _isDarkMode = false;
   bool _isLoading = true;
   UserSession? _currentUser;
+  bool _isBiometricUnlocked = false;
 
   int _xp = 0;
   int _level = 1;
@@ -46,6 +50,11 @@ class _MyAppState extends State<MyApp> {
       if (mounted) {
         setState(() {
           _currentUser = session;
+          if (session == null) {
+            _isBiometricUnlocked = false;
+          } else {
+            _isBiometricUnlocked = true;
+          }
         });
       }
     });
@@ -54,6 +63,7 @@ class _MyAppState extends State<MyApp> {
   Future<void> _loadDatabase() async {
     final dbService = DatabaseService.instance;
     await AuthService.instance.init();
+    await NotificationService.instance.init();
     final currentSession = AuthService.instance.currentUserValue;
 
     // Fetch habits, tasks, userstats, and timeblocks from SQLite
@@ -105,6 +115,10 @@ class _MyAppState extends State<MyApp> {
       }
     });
 
+    final isBiometricActive = await BiometricService.instance.isBiometricEnabled();
+    final pendingTasksCount = loadedTasks.where((t) => !t.isCompleted).length;
+    await NotificationService.instance.scheduleSmartReminder(pendingTasksCount);
+
     setState(() {
       _habits = loadedHabits;
       _tasks = loadedTasks;
@@ -112,6 +126,7 @@ class _MyAppState extends State<MyApp> {
       _level = loadedLevel ?? 1;
       _xp = loadedXP ?? 0;
       _currentUser = currentSession;
+      _isBiometricUnlocked = !isBiometricActive || currentSession == null;
       _isLoading = false;
     });
   }
@@ -160,15 +175,22 @@ class _MyAppState extends State<MyApp> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'LEVEL UP! 🌟',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.0,
-                          ),
+                        Row(
+                          children: const [
+                            Icon(LucideIcons.trophy, color: Colors.white, size: 18),
+                            SizedBox(width: 8),
+                            Text(
+                              'LEVEL UP!',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
                         ),
+                        const SizedBox(height: 4.0),
                         Text(
                           'Congratulations ${_currentUser?.name ?? 'Adrian'}! You reached Level $_level!',
                           style: const TextStyle(
@@ -186,10 +208,19 @@ class _MyAppState extends State<MyApp> {
           ),
         );
       } else {
-        // Dynamic floating XP gains
+        // Dynamic floating XP gains with Lucide icon
         scaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(
-            content: Text('+$amount XP earned! 🎯 Target progress: $_xp / $targetXP'),
+            content: Row(
+              children: [
+                const Icon(LucideIcons.award, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  '+$amount XP earned! Target progress: $_xp / $targetXP',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
@@ -239,6 +270,7 @@ class _MyAppState extends State<MyApp> {
       DatabaseService.instance.saveTask(newTask);
       _awardXP(20);
     });
+    NotificationService.instance.scheduleSmartReminder(_tasks.where((t) => !t.isCompleted).length);
   }
 
   void _updateTask(TaskItem updatedTask) {
@@ -260,6 +292,7 @@ class _MyAppState extends State<MyApp> {
         });
       }
     });
+    NotificationService.instance.scheduleSmartReminder(_tasks.where((t) => !t.isCompleted).length);
   }
 
   void _deleteTask(String id) {
@@ -272,6 +305,7 @@ class _MyAppState extends State<MyApp> {
       });
       DatabaseService.instance.deleteTask(id);
     });
+    NotificationService.instance.scheduleSmartReminder(_tasks.where((t) => !t.isCompleted).length);
   }
 
   void _updateTimeblock(String hour, TaskItem? task) {
@@ -306,24 +340,33 @@ class _MyAppState extends State<MyApp> {
             )
           : _currentUser == null
               ? LoginScreen(onLoginSuccess: _loadDatabase)
-              : MainNavigationScreen(
-                  habits: _habits,
-                  tasks: _tasks,
-                  timeblocks: _timeblocks,
-                  xp: _xp,
-                  level: _level,
-                  onAwardXP: _awardXP,
-                  onUpdateHabit: _updateHabit,
-                  onAddHabit: _addHabit,
-                  onResetAll: _resetAllHabits,
-                  onToggleTheme: _toggleTheme,
-                  isDarkMode: _isDarkMode,
-                  onAddTask: _addTask,
-                  onUpdateTask: _updateTask,
-                  onDeleteTask: _deleteTask,
-                  onUpdateTimeblock: _updateTimeblock,
-                  onReloadDatabase: _loadDatabase,
-                ),
+              : !_isBiometricUnlocked
+                  ? BiometricLockScreen(
+                      onUnlockSuccess: () {
+                        setState(() {
+                          _isBiometricUnlocked = true;
+                        });
+                      },
+                      onReload: _loadDatabase,
+                    )
+                  : MainNavigationScreen(
+                      habits: _habits,
+                      tasks: _tasks,
+                      timeblocks: _timeblocks,
+                      xp: _xp,
+                      level: _level,
+                      onAwardXP: _awardXP,
+                      onUpdateHabit: _updateHabit,
+                      onAddHabit: _addHabit,
+                      onResetAll: _resetAllHabits,
+                      onToggleTheme: _toggleTheme,
+                      isDarkMode: _isDarkMode,
+                      onAddTask: _addTask,
+                      onUpdateTask: _updateTask,
+                      onDeleteTask: _deleteTask,
+                      onUpdateTimeblock: _updateTimeblock,
+                      onReloadDatabase: _loadDatabase,
+                    ),
     );
   }
 }

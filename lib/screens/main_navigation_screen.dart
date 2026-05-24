@@ -7,6 +7,8 @@ import 'dart:io';
 import 'package:path/path.dart' show join;
 import 'package:path_provider/path_provider.dart';
 import '../services/database_service.dart';
+import '../services/biometric_service.dart';
+import '../services/notification_service.dart';
 import '../models/habit.dart';
 import '../models/task_item.dart';
 import 'habits_screen.dart';
@@ -60,6 +62,24 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 1; // Default to Habits tab (Active in mock)
   bool _biometricActive = false;
+  bool _notificationsEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final active = await BiometricService.instance.isBiometricEnabled();
+    final notifs = await NotificationService.instance.isNotificationsEnabled();
+    if (mounted) {
+      setState(() {
+        _biometricActive = active;
+        _notificationsEnabled = notifs;
+      });
+    }
+  }
 
   void _showProfileSettingsSheet(BuildContext context) async {
     final theme = Theme.of(context);
@@ -189,7 +209,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     SwitchListTile(
                       title: const Text('Kunci Biometrik (Fingerprint)'),
                       subtitle: Text(
-                        _biometricActive ? 'Active 🔒 (offline-first)' : 'Inactive 🔓',
+                        _biometricActive ? 'Aktif (offline-first)' : 'Nonaktif',
                         style: TextStyle(
                           color: _biometricActive ? theme.colorScheme.primary : theme.colorScheme.outline,
                           fontWeight: FontWeight.bold,
@@ -197,14 +217,169 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       ),
                       value: _biometricActive,
                       activeTrackColor: theme.colorScheme.primary,
-                      onChanged: (bool value) {
-                        setModalState(() {
-                          setState(() {
-                            _biometricActive = value;
-                          });
-                        });
+                      onChanged: (bool value) async {
                         if (value) {
-                          widget.onAwardXP(15);
+                          final isAvailable = await BiometricService.instance.isBiometricAvailable();
+                          if (!isAvailable) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Row(
+                                    children: [
+                                      Icon(LucideIcons.alertTriangle, color: Colors.white, size: 20),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text('Perangkat tidak mendukung biometrik atau sidik jari belum terdaftar!'),
+                                      ),
+                                    ],
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                            return;
+                          }
+
+                          final authenticated = await BiometricService.instance.authenticate(
+                            'Verifikasi sidik jari untuk mengaktifkan kunci biometrik',
+                          );
+
+                          if (authenticated) {
+                            await BiometricService.instance.setBiometricEnabled(true);
+                            setModalState(() {
+                              setState(() {
+                                _biometricActive = true;
+                              });
+                            });
+                            widget.onAwardXP(15);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Row(
+                                    children: [
+                                      Icon(LucideIcons.shieldCheck, color: Colors.white, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Kunci Biometrik diaktifkan! (+15 XP)'),
+                                    ],
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          } else {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Row(
+                                    children: [
+                                      Icon(LucideIcons.alertOctagon, color: Colors.white, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Verifikasi biometrik gagal!'),
+                                    ],
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          }
+                        } else {
+                          await BiometricService.instance.setBiometricEnabled(false);
+                          setModalState(() {
+                            setState(() {
+                              _biometricActive = false;
+                            });
+                          });
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Row(
+                                  children: [
+                                    Icon(LucideIcons.shieldAlert, color: Colors.white, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Kunci Biometrik dinonaktifkan.'),
+                                  ],
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                    const Divider(),
+                    // Notification Switch Row
+                    SwitchListTile(
+                      title: const Text('Pengingat Harian (8:00 PM)'),
+                      subtitle: Text(
+                        _notificationsEnabled ? 'Aktif' : 'Nonaktif',
+                        style: TextStyle(
+                          color: _notificationsEnabled ? theme.colorScheme.primary : theme.colorScheme.outline,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      value: _notificationsEnabled,
+                      activeTrackColor: theme.colorScheme.primary,
+                      onChanged: (bool value) async {
+                        if (value) {
+                          final granted = await NotificationService.instance.requestPermissions();
+                          if (!granted) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Row(
+                                    children: [
+                                      Icon(LucideIcons.alertTriangle, color: Colors.white, size: 20),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text('Izin notifikasi ditolak. Silakan aktifkan di pengaturan sistem!'),
+                                      ),
+                                    ],
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                            return;
+                          }
+
+                          await NotificationService.instance.setNotificationsEnabled(true);
+                          setModalState(() {
+                            setState(() {
+                              _notificationsEnabled = true;
+                            });
+                          });
+
+                          // Schedule smart reminder
+                          final pending = widget.tasks.where((t) => !t.isCompleted).length;
+                          await NotificationService.instance.scheduleSmartReminder(pending);
+
+                          // Send instant test notification
+                          await NotificationService.instance.sendInstantNotification(
+                            'Notifikasi Diaktifkan!',
+                            'Retivy akan mengingatkan tugas Anda setiap jam 8 malam.',
+                          );
+                        } else {
+                          await NotificationService.instance.setNotificationsEnabled(false);
+                          await NotificationService.instance.cancelSmartReminder();
+                          setModalState(() {
+                            setState(() {
+                              _notificationsEnabled = false;
+                            });
+                          });
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Row(
+                                  children: [
+                                    Icon(LucideIcons.bellOff, color: Colors.white, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Notifikasi pengingat dinonaktifkan.'),
+                                  ],
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
                         }
                       },
                     ),
@@ -221,7 +396,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Backup berhasil! Disimpan di: $backupPath 💾 (+25 XP)'),
+                              content: Row(
+                                children: [
+                                  const Icon(LucideIcons.download, color: Colors.white, size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text('Backup berhasil! Disimpan di: $backupPath (+25 XP)'),
+                                  ),
+                                ],
+                              ),
                               behavior: SnackBarBehavior.floating,
                               duration: const Duration(seconds: 4),
                             ),
@@ -244,7 +427,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Gagal: Berkas retivy_backup.json tidak ditemukan! Silakan lakukan export terlebih dahulu. ⚠️'),
+                                content: Row(
+                                  children: [
+                                    Icon(LucideIcons.alertTriangle, color: Colors.white, size: 20),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text('Gagal: Berkas retivy_backup.json tidak ditemukan! Silakan lakukan export terlebih dahulu.'),
+                                    ),
+                                  ],
+                                ),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
@@ -259,7 +450,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Berhasil memulihkan cadangan Retivy! 🚀 (+30 XP)'),
+                                content: Row(
+                                  children: [
+                                    Icon(LucideIcons.uploadCloud, color: Colors.white, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Berhasil memulihkan cadangan Retivy! (+30 XP)'),
+                                  ],
+                                ),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
@@ -268,7 +465,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Gagal membaca berkas cadangan! Format berkas rusak atau tidak valid. ⚠️'),
+                                content: Row(
+                                  children: [
+                                    Icon(LucideIcons.alertOctagon, color: Colors.white, size: 20),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text('Gagal membaca berkas cadangan! Format berkas rusak atau tidak valid.'),
+                                    ),
+                                  ],
+                                ),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
