@@ -33,6 +33,7 @@ class MainNavigationScreen extends StatefulWidget {
   final ValueChanged<String> onDeleteTask;
   final Function(String, TaskItem?) onUpdateTimeblock;
   final VoidCallback onReloadDatabase;
+  final int initialIndex;
 
   const MainNavigationScreen({
     super.key,
@@ -52,6 +53,7 @@ class MainNavigationScreen extends StatefulWidget {
     required this.onDeleteTask,
     required this.onUpdateTimeblock,
     required this.onReloadDatabase,
+    this.initialIndex = 0,
   });
 
 
@@ -60,13 +62,14 @@ class MainNavigationScreen extends StatefulWidget {
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _currentIndex = 1; // Default to Habits tab (Active in mock)
+  late int _currentIndex;
   bool _biometricActive = false;
   bool _notificationsEnabled = true;
 
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _loadSettings();
   }
 

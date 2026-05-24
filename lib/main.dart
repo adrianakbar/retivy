@@ -366,6 +366,7 @@ class _MyAppState extends State<MyApp> {
                       onDeleteTask: _deleteTask,
                       onUpdateTimeblock: _updateTimeblock,
                       onReloadDatabase: _loadDatabase,
+                      initialIndex: 0,
                     ),
     );
   }
